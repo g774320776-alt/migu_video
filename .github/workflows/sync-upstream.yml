@@ -1,0 +1,30 @@
+name: Auto Sync Upstream
+on:
+  schedule:
+    # UTC时间！下面=北京时间每6小时执行一次（可自行调整）
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # 支持页面手动一键触发同步
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 拉取当前仓库代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 配置Git信息
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          # 添加上游原版仓库
+          git remote add upstream https://github.com/develop202/migu_video.git
+          git fetch upstream
+
+      - name: 合并上游main分支更新（原版仓库默认分支main）
+        run: |
+          git checkout main
+          # -X theirs：上游原版代码优先，如果你本地有修改会被原版覆盖
+          git merge upstream/main -X theirs --allow-unrelated-histories
+          git push origin main
